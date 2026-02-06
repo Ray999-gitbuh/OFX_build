@@ -136,17 +136,22 @@ jobs:
     - name: Check if Recovery Exist
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
-        if [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img ]; then
+        # Cari file apa saja yang ada di folder out untuk debugging
+        ls out/target/product/${{ github.event.inputs.DEVICE_NAME }}/
+        
+        if [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img ] || [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/vendor_boot.img ] || [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/recovery.img ]; then
             echo "CHECK_IMG_IS_OK=true" >> $GITHUB_ENV
             echo "FILE_PATH=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-            echo "MD5_IMG=$(md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
-        elif [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img ]; then
-            echo "CHECK_IMG_IS_OK=true" >> $GITHUB_ENV
-            echo "FILE_PATH=${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/target/product/${{ github.event.inputs.DEVICE_NAME }}" >> $GITHUB_ENV
-            echo "MD5_IMG=$(md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
+            
+            # Mendeteksi file mana yang ada untuk dihitung MD5-nya
+            if [ -f out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img ]; then
+                echo "MD5_IMG=$(md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/OrangeFox*.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
+            else
+                echo "MD5_IMG=$(md5sum out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img | cut -d ' ' -f 1)" >> $GITHUB_ENV
+            fi
         else
             echo "Recovery out directory is empty."
-            cd Exit
+            exit 1
         fi
 
     - name: Rename the Recovery
